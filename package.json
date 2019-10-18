@@ -4,7 +4,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": ".\\scripts\\pre-commit.ps1"
+      "pre-commit": "bash scripts/pre-commit.sh"
     }
   },
   "devDependencies": {
