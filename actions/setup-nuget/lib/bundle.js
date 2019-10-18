@@ -8,7 +8,8 @@ var path__default = _interopDefault(path);
 var child_process = _interopDefault(require('child_process'));
 var util = _interopDefault(require('util'));
 var assert = _interopDefault(require('assert'));
-var fs = _interopDefault(require('fs'));
+var fs = require('fs');
+var fs__default = _interopDefault(fs);
 var url = _interopDefault(require('url'));
 var http = _interopDefault(require('http'));
 var https = _interopDefault(require('https'));
@@ -304,7 +305,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 
 
 
-_a = fs.promises, exports.chmod = _a.chmod, exports.copyFile = _a.copyFile, exports.lstat = _a.lstat, exports.mkdir = _a.mkdir, exports.readdir = _a.readdir, exports.readlink = _a.readlink, exports.rename = _a.rename, exports.rmdir = _a.rmdir, exports.stat = _a.stat, exports.symlink = _a.symlink, exports.unlink = _a.unlink;
+_a = fs__default.promises, exports.chmod = _a.chmod, exports.copyFile = _a.copyFile, exports.lstat = _a.lstat, exports.mkdir = _a.mkdir, exports.readdir = _a.readdir, exports.readlink = _a.readlink, exports.rename = _a.rename, exports.rmdir = _a.rmdir, exports.stat = _a.stat, exports.symlink = _a.symlink, exports.unlink = _a.unlink;
 exports.IS_WINDOWS = process.platform === 'win32';
 function exists(fsPath) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -1066,7 +1067,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 
 
 
-let fs$1;
+let fs;
 let tunnel;
 var HttpCodes;
 (function (HttpCodes) {
@@ -1156,16 +1157,16 @@ class HttpClient {
             this._certConfig = requestOptions.cert;
             if (this._certConfig) {
                 // If using cert, need fs
-                fs$1 = fs;
+                fs = fs__default;
                 // cache the cert content into memory, so we don't have to read it from disk every time 
-                if (this._certConfig.caFile && fs$1.existsSync(this._certConfig.caFile)) {
-                    this._ca = fs$1.readFileSync(this._certConfig.caFile, 'utf8');
+                if (this._certConfig.caFile && fs.existsSync(this._certConfig.caFile)) {
+                    this._ca = fs.readFileSync(this._certConfig.caFile, 'utf8');
                 }
-                if (this._certConfig.certFile && fs$1.existsSync(this._certConfig.certFile)) {
-                    this._cert = fs$1.readFileSync(this._certConfig.certFile, 'utf8');
+                if (this._certConfig.certFile && fs.existsSync(this._certConfig.certFile)) {
+                    this._cert = fs.readFileSync(this._certConfig.certFile, 'utf8');
                 }
-                if (this._certConfig.keyFile && fs$1.existsSync(this._certConfig.keyFile)) {
-                    this._key = fs$1.readFileSync(this._certConfig.keyFile, 'utf8');
+                if (this._certConfig.keyFile && fs.existsSync(this._certConfig.keyFile)) {
+                    this._key = fs.readFileSync(this._certConfig.keyFile, 'utf8');
                 }
             }
             if (requestOptions.allowRedirects != null) {
@@ -3912,7 +3913,7 @@ function downloadTool(url) {
                 yield io.mkdirP(tempDirectory);
                 core.debug(`Downloading ${url}`);
                 core.debug(`Downloading ${destPath}`);
-                if (fs.existsSync(destPath)) {
+                if (fs__default.existsSync(destPath)) {
                     throw new Error(`Destination file path ${destPath} already exists`);
                 }
                 const response = yield http.get(url);
@@ -3921,7 +3922,7 @@ function downloadTool(url) {
                     core.debug(`Failed to download from "${url}". Code(${response.message.statusCode}) Message(${response.message.statusMessage})`);
                     throw err;
                 }
-                const file = fs.createWriteStream(destPath);
+                const file = fs__default.createWriteStream(destPath);
                 file.on('open', () => __awaiter(this, void 0, void 0, function* () {
                     try {
                         const stream = response.message.pipe(file);
@@ -4104,14 +4105,14 @@ function cacheDir(sourceDir, tool, version, arch) {
         arch = arch || os.arch();
         core.debug(`Caching tool ${tool} ${version} ${arch}`);
         core.debug(`source dir: ${sourceDir}`);
-        if (!fs.statSync(sourceDir).isDirectory()) {
+        if (!fs__default.statSync(sourceDir).isDirectory()) {
             throw new Error('sourceDir is not a directory');
         }
         // Create the tool dir
         const destPath = yield _createToolPath(tool, version, arch);
         // copy each child item. do not move. move can fail on Windows
         // due to anti-virus software having an open handle on a file.
-        for (const itemName of fs.readdirSync(sourceDir)) {
+        for (const itemName of fs__default.readdirSync(sourceDir)) {
             const s = path__default.join(sourceDir, itemName);
             yield io.cp(s, destPath, { recursive: true });
         }
@@ -4137,7 +4138,7 @@ function cacheFile(sourceFile, targetFile, tool, version, arch) {
         arch = arch || os.arch();
         core.debug(`Caching tool ${tool} ${version} ${arch}`);
         core.debug(`source file: ${sourceFile}`);
-        if (!fs.statSync(sourceFile).isFile()) {
+        if (!fs__default.statSync(sourceFile).isFile()) {
             throw new Error('sourceFile is not a file');
         }
         // create the tool dir
@@ -4180,7 +4181,7 @@ function find(toolName, versionSpec, arch) {
         versionSpec = semver.clean(versionSpec) || '';
         const cachePath = path__default.join(cacheRoot, toolName, versionSpec, arch);
         core.debug(`checking cache: ${cachePath}`);
-        if (fs.existsSync(cachePath) && fs.existsSync(`${cachePath}.complete`)) {
+        if (fs__default.existsSync(cachePath) && fs__default.existsSync(`${cachePath}.complete`)) {
             core.debug(`Found tool in cache ${toolName} ${versionSpec} ${arch}`);
             toolPath = cachePath;
         }
@@ -4201,12 +4202,12 @@ function findAllVersions(toolName, arch) {
     const versions = [];
     arch = arch || os.arch();
     const toolPath = path__default.join(cacheRoot, toolName);
-    if (fs.existsSync(toolPath)) {
-        const children = fs.readdirSync(toolPath);
+    if (fs__default.existsSync(toolPath)) {
+        const children = fs__default.readdirSync(toolPath);
         for (const child of children) {
             if (_isExplicitVersion(child)) {
                 const fullPath = path__default.join(toolPath, child, arch || '');
-                if (fs.existsSync(fullPath) && fs.existsSync(`${fullPath}.complete`)) {
+                if (fs__default.existsSync(fullPath) && fs__default.existsSync(`${fullPath}.complete`)) {
                     versions.push(child);
                 }
             }
@@ -4239,7 +4240,7 @@ function _createToolPath(tool, version, arch) {
 function _completeToolPath(tool, version, arch) {
     const folderPath = path__default.join(cacheRoot, tool, semver.clean(version) || version, arch || '');
     const markerPath = `${folderPath}.complete`;
-    fs.writeFileSync(markerPath, '');
+    fs__default.writeFileSync(markerPath, '');
     core.debug('finished caching tool');
 }
 function _isExplicitVersion(versionSpec) {
@@ -4313,6 +4314,8 @@ class NuGetInstaller {
         core_8(`Downloading NuGet from ${downloadUrl}`);
         const nugetPath = await toolCache_2(downloadUrl);
         const nugetPathDir = path.dirname(nugetPath);
+        // Rename to work around https://github.com/actions/toolkit/issues/60
+        fs.renameSync(nugetPath, path.join(nugetPathDir, 'nuget.exe'));
         core_8('Caching tool');
         const cachedDir = await toolCache_6(nugetPathDir, this.cachedToolName, this.version);
         return cachedDir;

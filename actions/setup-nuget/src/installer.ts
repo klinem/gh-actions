@@ -1,5 +1,6 @@
 import * as core from '@actions/core';
 import * as toolCache from '@actions/tool-cache';
+import * as fs from 'fs';
 import * as path from 'path';
 
 export class NuGetInstaller {
@@ -32,6 +33,8 @@ export class NuGetInstaller {
     core.debug(`Downloading NuGet from ${downloadUrl}`);
     const nugetPath = await toolCache.downloadTool(downloadUrl);
     const nugetPathDir = path.dirname(nugetPath);
+    // Rename to work around https://github.com/actions/toolkit/issues/60
+    fs.renameSync(nugetPath, path.join(nugetPathDir, 'nuget.exe'));
 
     core.debug('Caching tool');
     const cachedDir = await toolCache.cacheDir(nugetPathDir, this.cachedToolName, this.version);
