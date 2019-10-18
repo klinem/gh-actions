@@ -53,7 +53,7 @@ export class MSBuildInstaller {
   private async findMSBuild(vsWherePath: string) {
     let msBuildPath: string = '';
 
-    await exec.exec(vsWherePath, ['-latest', '-find', '**\\Bin\\MSbuild.exe'], {
+    await exec.exec(vsWherePath, ['-latest', '-requires', 'Microsoft.Component.MSBuild', '-find', 'MSBuild\\**\\Bin\\MSBuild.exe'], {
       listeners: {
         stdout: (data: Buffer) => {
           msBuildPath += data.toString();
