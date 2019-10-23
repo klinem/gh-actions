@@ -7,13 +7,9 @@ import * as os from 'os';
 export class GitVersionInstaller {
   private readonly cachedToolName = 'gitversion';
 
-  constructor(private readonly version: string = 'latest') {}
+  constructor(private readonly version: string) {}
 
   async install() {
-    if (process.platform !== 'win32') {
-      throw `NuGet is not supported on this platform (${process.platform}).`;
-    }
-
     let toolPath = this.getCachedToolPath();
     if (!toolPath) {
       toolPath = await this.downloadAndInstall();
