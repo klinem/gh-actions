@@ -1,5 +1,10 @@
 {
+  "private": true,
+  "workspaces": [
+    "actions/*"
+  ],
   "scripts": {
+    "test": "bash scripts/test.sh",
     "format": "pretty-quick"
   },
   "husky": {

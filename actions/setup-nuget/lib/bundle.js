@@ -271,6 +271,29 @@ function group(name, fn) {
     });
 }
 exports.group = group;
+//-----------------------------------------------------------------------
+// Wrapper action state
+//-----------------------------------------------------------------------
+/**
+ * Saves state for current action, the state can only be retrieved by this action's post job execution.
+ *
+ * @param     name     name of the state to store
+ * @param     value    value to store
+ */
+function saveState(name, value) {
+    command.issueCommand('save-state', { name }, value);
+}
+exports.saveState = saveState;
+/**
+ * Gets the value of an state set by this action's main execution.
+ *
+ * @param     name     name of the state to get
+ * @returns   string
+ */
+function getState(name) {
+    return process.env[`STATE_${name}`] || '';
+}
+exports.getState = getState;
 
 });
 
@@ -289,6 +312,8 @@ var core_11 = core.info;
 var core_12 = core.startGroup;
 var core_13 = core.endGroup;
 var core_14 = core.group;
+var core_15 = core.saveState;
+var core_16 = core.getState;
 
 var ioUtil = createCommonjsModule(function (module, exports) {
 var __awaiter = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
