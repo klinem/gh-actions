@@ -11,7 +11,8 @@ async function run() {
     await installer.install();
 
     let output = '';
-    exec.exec('dotnet-gitversion', ['/output', 'json'], {
+    await exec.exec('dotnet-gitversion', ['/output', 'json'], {
+      silent: true,
       listeners: {
         stdout: (data: Buffer) => {
           output += data.toString();
@@ -19,11 +20,9 @@ async function run() {
       },
     });
 
-    core.info(output);
-
-    const gitVersionResult: { [key: string]: string } = JSON.parse(output);
-    for (const key in gitVersionResult) {
-      core.exportVariable(`GITVERSION_${key}`, gitVersionResult[key]);
+    const gitVersionJson: { [key: string]: string } = JSON.parse(output);
+    for (const key in gitVersionJson) {
+      core.exportVariable(`GITVERSION_${key}`, gitVersionJson[key]);
     }
   } catch (error) {
     core.setFailed(error.message);

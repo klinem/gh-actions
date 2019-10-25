@@ -6,7 +6,7 @@
   "main": "lib/main.js",
   "scripts": {
     "build": "rollup --config",
-    "test": "jest"
+    "test": "jest --runInBand"
   },
   "license": "MIT",
   "dependencies": {

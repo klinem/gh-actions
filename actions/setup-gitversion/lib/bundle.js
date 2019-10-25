@@ -4354,17 +4354,17 @@ async function run() {
         const installer = new GitVersionInstaller(version);
         await installer.install();
         let output = '';
-        exec_2('dotnet-gitversion', ['/output', 'json'], {
+        await exec_2('dotnet-gitversion', ['/output', 'json'], {
+            silent: true,
             listeners: {
                 stdout: (data) => {
                     output += data.toString();
                 },
             },
         });
-        core_11(output);
-        const gitVersionResult = JSON.parse(output);
-        for (const key in gitVersionResult) {
-            core_2(`GITVERSION_${key}`, gitVersionResult[key]);
+        const gitVersionJson = JSON.parse(output);
+        for (const key in gitVersionJson) {
+            core_2(`GITVERSION_${key}`, gitVersionJson[key]);
         }
     }
     catch (error) {
