@@ -4314,6 +4314,10 @@ var toolCache_7 = toolCache.cacheFile;
 var toolCache_8 = toolCache.find;
 var toolCache_9 = toolCache.findAllVersions;
 
+let tempDirectory = process.env['RUNNER_TEMP'] || '';
+if (!tempDirectory) {
+    tempDirectory = os.tmpdir();
+}
 class GitVersionInstaller {
     constructor(version) {
         this.version = version;
@@ -4331,7 +4335,7 @@ class GitVersionInstaller {
         return toolCache_8(this.cachedToolName, this.version);
     }
     async downloadAndInstall() {
-        var toolDir = path.join(os.tmpdir(), 'GitVerison');
+        var toolDir = path.join(tempDirectory, 'gitversion', this.version);
         var installArgs = ['tool', 'install', 'GitVersion.Tool', '--tool-path', toolDir];
         if (this.version && this.version !== 'latest') {
             installArgs.push('--version', this.version);
