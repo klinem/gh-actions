@@ -4351,8 +4351,12 @@ class GitVersionInstaller {
 async function run() {
     try {
         const version = core_5('version');
+        const installOnly = core_5('installOnly') !== 'false';
         const installer = new GitVersionInstaller(version);
         await installer.install();
+        if (installOnly) {
+            return;
+        }
         let output = '';
         let error = '';
         await exec_2('dotnet-gitversion', ['/output', 'json'], {

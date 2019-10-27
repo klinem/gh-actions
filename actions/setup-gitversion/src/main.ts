@@ -6,9 +6,14 @@ import { GitVersionInstaller } from './installer';
 async function run() {
   try {
     const version = core.getInput('version');
+    const installOnly = core.getInput('installOnly') !== 'false';
 
     const installer = new GitVersionInstaller(version);
     await installer.install();
+
+    if (installOnly) {
+      return;
+    }
 
     let output = '';
     let error = '';

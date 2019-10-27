@@ -5,6 +5,9 @@ inputs:
   version:
     description: 'GitVersion tool version'
     default: 'latest'
+  installOnly:
+    description: 'Only install GitVersion tool'
+    default: false
 runs:
   using: 'node12'
   main: 'lib/bundle.js'
