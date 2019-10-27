@@ -11,14 +11,22 @@ async function run() {
     await installer.install();
 
     let output = '';
+    let error = '';
     await exec.exec('dotnet-gitversion', ['/output', 'json'], {
       silent: true,
       listeners: {
+        stderr: (data: Buffer) => {
+          error += data.toString();
+        },
         stdout: (data: Buffer) => {
           output += data.toString();
         },
       },
     });
+
+    if (!!error) {
+      throw error;
+    }
 
     const gitVersionJson: { [key: string]: string } = JSON.parse(output);
     for (const key in gitVersionJson) {
