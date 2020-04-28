@@ -2,8 +2,11 @@
 yarn pretty-quick;
 
 # Build action bundles.
+yarn --cwd actions/utils build;
+
 yarn --cwd actions/setup-gitversion build;
 yarn --cwd actions/setup-msbuild build;
 yarn --cwd actions/setup-nuget build;
+yarn --cwd actions/setup-octopus build;
 yarn --cwd actions/wait build;
 git add **/bundle.js
