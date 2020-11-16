@@ -3,13 +3,13 @@
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
 var os = _interopDefault(require('os'));
+var fs = require('fs');
+var fs__default = _interopDefault(fs);
 var path = require('path');
 var path__default = _interopDefault(path);
 var child_process = _interopDefault(require('child_process'));
 var util = _interopDefault(require('util'));
 var assert = _interopDefault(require('assert'));
-var fs = require('fs');
-var fs__default = _interopDefault(fs);
 var url = _interopDefault(require('url'));
 var http = _interopDefault(require('http'));
 var https = _interopDefault(require('https'));
@@ -80,7 +80,410 @@ function createCommonjsModule(fn, module) {
 	return module = { exports: {} }, fn(module, module.exports), module.exports;
 }
 
+var utils = createCommonjsModule(function (module, exports) {
+// We use any as a valid input type
+/* eslint-disable @typescript-eslint/no-explicit-any */
+Object.defineProperty(exports, "__esModule", { value: true });
+/**
+ * Sanitizes an input into a string so it can be passed into issueCommand safely
+ * @param input input to sanitize into a string
+ */
+function toCommandValue(input) {
+    if (input === null || input === undefined) {
+        return '';
+    }
+    else if (typeof input === 'string' || input instanceof String) {
+        return input;
+    }
+    return JSON.stringify(input);
+}
+exports.toCommandValue = toCommandValue;
+
+});
+
+unwrapExports(utils);
+var utils_1 = utils.toCommandValue;
+
 var command = createCommonjsModule(function (module, exports) {
+var __importStar = (commonjsGlobal && commonjsGlobal.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const os$1 = __importStar(os);
+
+/**
+ * Commands
+ *
+ * Command Format:
+ *   ::name key=value,key=value::message
+ *
+ * Examples:
+ *   ::warning::This is the message
+ *   ::set-env name=MY_VAR::some value
+ */
+function issueCommand(command, properties, message) {
+    const cmd = new Command(command, properties, message);
+    process.stdout.write(cmd.toString() + os$1.EOL);
+}
+exports.issueCommand = issueCommand;
+function issue(name, message = '') {
+    issueCommand(name, {}, message);
+}
+exports.issue = issue;
+const CMD_STRING = '::';
+class Command {
+    constructor(command, properties, message) {
+        if (!command) {
+            command = 'missing.command';
+        }
+        this.command = command;
+        this.properties = properties;
+        this.message = message;
+    }
+    toString() {
+        let cmdStr = CMD_STRING + this.command;
+        if (this.properties && Object.keys(this.properties).length > 0) {
+            cmdStr += ' ';
+            let first = true;
+            for (const key in this.properties) {
+                if (this.properties.hasOwnProperty(key)) {
+                    const val = this.properties[key];
+                    if (val) {
+                        if (first) {
+                            first = false;
+                        }
+                        else {
+                            cmdStr += ',';
+                        }
+                        cmdStr += `${key}=${escapeProperty(val)}`;
+                    }
+                }
+            }
+        }
+        cmdStr += `${CMD_STRING}${escapeData(this.message)}`;
+        return cmdStr;
+    }
+}
+function escapeData(s) {
+    return utils.toCommandValue(s)
+        .replace(/%/g, '%25')
+        .replace(/\r/g, '%0D')
+        .replace(/\n/g, '%0A');
+}
+function escapeProperty(s) {
+    return utils.toCommandValue(s)
+        .replace(/%/g, '%25')
+        .replace(/\r/g, '%0D')
+        .replace(/\n/g, '%0A')
+        .replace(/:/g, '%3A')
+        .replace(/,/g, '%2C');
+}
+
+});
+
+unwrapExports(command);
+var command_1 = command.issueCommand;
+var command_2 = command.issue;
+
+var fileCommand = createCommonjsModule(function (module, exports) {
+// For internal use, subject to change.
+var __importStar = (commonjsGlobal && commonjsGlobal.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+// We use any as a valid input type
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const fs = __importStar(fs__default);
+const os$1 = __importStar(os);
+
+function issueCommand(command, message) {
+    const filePath = process.env[`GITHUB_${command}`];
+    if (!filePath) {
+        throw new Error(`Unable to find environment variable for file command ${command}`);
+    }
+    if (!fs.existsSync(filePath)) {
+        throw new Error(`Missing file at path: ${filePath}`);
+    }
+    fs.appendFileSync(filePath, `${utils.toCommandValue(message)}${os$1.EOL}`, {
+        encoding: 'utf8'
+    });
+}
+exports.issueCommand = issueCommand;
+
+});
+
+unwrapExports(fileCommand);
+var fileCommand_1 = fileCommand.issueCommand;
+
+var core = createCommonjsModule(function (module, exports) {
+var __awaiter = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importStar = (commonjsGlobal && commonjsGlobal.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
+    result["default"] = mod;
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+
+
+
+const os$1 = __importStar(os);
+const path = __importStar(path__default);
+/**
+ * The code to exit an action
+ */
+var ExitCode;
+(function (ExitCode) {
+    /**
+     * A code indicating that the action was successful
+     */
+    ExitCode[ExitCode["Success"] = 0] = "Success";
+    /**
+     * A code indicating that the action was a failure
+     */
+    ExitCode[ExitCode["Failure"] = 1] = "Failure";
+})(ExitCode = exports.ExitCode || (exports.ExitCode = {}));
+//-----------------------------------------------------------------------
+// Variables
+//-----------------------------------------------------------------------
+/**
+ * Sets env variable for this action and future actions in the job
+ * @param name the name of the variable to set
+ * @param val the value of the variable. Non-string values will be converted to a string via JSON.stringify
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function exportVariable(name, val) {
+    const convertedVal = utils.toCommandValue(val);
+    process.env[name] = convertedVal;
+    const filePath = process.env['GITHUB_ENV'] || '';
+    if (filePath) {
+        const delimiter = '_GitHubActionsFileCommandDelimeter_';
+        const commandValue = `${name}<<${delimiter}${os$1.EOL}${convertedVal}${os$1.EOL}${delimiter}`;
+        fileCommand.issueCommand('ENV', commandValue);
+    }
+    else {
+        command.issueCommand('set-env', { name }, convertedVal);
+    }
+}
+exports.exportVariable = exportVariable;
+/**
+ * Registers a secret which will get masked from logs
+ * @param secret value of the secret
+ */
+function setSecret(secret) {
+    command.issueCommand('add-mask', {}, secret);
+}
+exports.setSecret = setSecret;
+/**
+ * Prepends inputPath to the PATH (for this action and future actions)
+ * @param inputPath
+ */
+function addPath(inputPath) {
+    const filePath = process.env['GITHUB_PATH'] || '';
+    if (filePath) {
+        fileCommand.issueCommand('PATH', inputPath);
+    }
+    else {
+        command.issueCommand('add-path', {}, inputPath);
+    }
+    process.env['PATH'] = `${inputPath}${path.delimiter}${process.env['PATH']}`;
+}
+exports.addPath = addPath;
+/**
+ * Gets the value of an input.  The value is also trimmed.
+ *
+ * @param     name     name of the input to get
+ * @param     options  optional. See InputOptions.
+ * @returns   string
+ */
+function getInput(name, options) {
+    const val = process.env[`INPUT_${name.replace(/ /g, '_').toUpperCase()}`] || '';
+    if (options && options.required && !val) {
+        throw new Error(`Input required and not supplied: ${name}`);
+    }
+    return val.trim();
+}
+exports.getInput = getInput;
+/**
+ * Sets the value of an output.
+ *
+ * @param     name     name of the output to set
+ * @param     value    value to store. Non-string values will be converted to a string via JSON.stringify
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function setOutput(name, value) {
+    command.issueCommand('set-output', { name }, value);
+}
+exports.setOutput = setOutput;
+/**
+ * Enables or disables the echoing of commands into stdout for the rest of the step.
+ * Echoing is disabled by default if ACTIONS_STEP_DEBUG is not set.
+ *
+ */
+function setCommandEcho(enabled) {
+    command.issue('echo', enabled ? 'on' : 'off');
+}
+exports.setCommandEcho = setCommandEcho;
+//-----------------------------------------------------------------------
+// Results
+//-----------------------------------------------------------------------
+/**
+ * Sets the action status to failed.
+ * When the action exits it will be with an exit code of 1
+ * @param message add error issue message
+ */
+function setFailed(message) {
+    process.exitCode = ExitCode.Failure;
+    error(message);
+}
+exports.setFailed = setFailed;
+//-----------------------------------------------------------------------
+// Logging Commands
+//-----------------------------------------------------------------------
+/**
+ * Gets whether Actions Step Debug is on or not
+ */
+function isDebug() {
+    return process.env['RUNNER_DEBUG'] === '1';
+}
+exports.isDebug = isDebug;
+/**
+ * Writes debug message to user log
+ * @param message debug message
+ */
+function debug(message) {
+    command.issueCommand('debug', {}, message);
+}
+exports.debug = debug;
+/**
+ * Adds an error issue
+ * @param message error issue message. Errors will be converted to string via toString()
+ */
+function error(message) {
+    command.issue('error', message instanceof Error ? message.toString() : message);
+}
+exports.error = error;
+/**
+ * Adds an warning issue
+ * @param message warning issue message. Errors will be converted to string via toString()
+ */
+function warning(message) {
+    command.issue('warning', message instanceof Error ? message.toString() : message);
+}
+exports.warning = warning;
+/**
+ * Writes info to log with console.log.
+ * @param message info message
+ */
+function info(message) {
+    process.stdout.write(message + os$1.EOL);
+}
+exports.info = info;
+/**
+ * Begin an output group.
+ *
+ * Output until the next `groupEnd` will be foldable in this group
+ *
+ * @param name The name of the output group
+ */
+function startGroup(name) {
+    command.issue('group', name);
+}
+exports.startGroup = startGroup;
+/**
+ * End an output group.
+ */
+function endGroup() {
+    command.issue('endgroup');
+}
+exports.endGroup = endGroup;
+/**
+ * Wrap an asynchronous function call in a group.
+ *
+ * Returns the same type as the function itself.
+ *
+ * @param name The name of the group
+ * @param fn The function to wrap in the group
+ */
+function group(name, fn) {
+    return __awaiter(this, void 0, void 0, function* () {
+        startGroup(name);
+        let result;
+        try {
+            result = yield fn();
+        }
+        finally {
+            endGroup();
+        }
+        return result;
+    });
+}
+exports.group = group;
+//-----------------------------------------------------------------------
+// Wrapper action state
+//-----------------------------------------------------------------------
+/**
+ * Saves state for current action, the state can only be retrieved by this action's post job execution.
+ *
+ * @param     name     name of the state to store
+ * @param     value    value to store. Non-string values will be converted to a string via JSON.stringify
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function saveState(name, value) {
+    command.issueCommand('save-state', { name }, value);
+}
+exports.saveState = saveState;
+/**
+ * Gets the value of an state set by this action's main execution.
+ *
+ * @param     name     name of the state to get
+ * @returns   string
+ */
+function getState(name) {
+    return process.env[`STATE_${name}`] || '';
+}
+exports.getState = getState;
+
+});
+
+unwrapExports(core);
+var core_1 = core.ExitCode;
+var core_2 = core.exportVariable;
+var core_3 = core.setSecret;
+var core_4 = core.addPath;
+var core_5 = core.getInput;
+var core_6 = core.setOutput;
+var core_7 = core.setCommandEcho;
+var core_8 = core.setFailed;
+var core_9 = core.isDebug;
+var core_10 = core.debug;
+var core_11 = core.error;
+var core_12 = core.warning;
+var core_13 = core.info;
+var core_14 = core.startGroup;
+var core_15 = core.endGroup;
+var core_16 = core.group;
+var core_17 = core.saveState;
+var core_18 = core.getState;
+
+var command$1 = createCommonjsModule(function (module, exports) {
 Object.defineProperty(exports, "__esModule", { value: true });
 
 /**
@@ -148,11 +551,11 @@ function escape(s) {
 
 });
 
-unwrapExports(command);
-var command_1 = command.issueCommand;
-var command_2 = command.issue;
+unwrapExports(command$1);
+var command_1$1 = command$1.issueCommand;
+var command_2$1 = command$1.issue;
 
-var core = createCommonjsModule(function (module, exports) {
+var core$1 = createCommonjsModule(function (module, exports) {
 var __awaiter = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -190,7 +593,7 @@ var ExitCode;
  */
 function exportVariable(name, val) {
     process.env[name] = val;
-    command.issueCommand('set-env', { name }, val);
+    command$1.issueCommand('set-env', { name }, val);
 }
 exports.exportVariable = exportVariable;
 /**
@@ -198,7 +601,7 @@ exports.exportVariable = exportVariable;
  * @param secret value of the secret
  */
 function setSecret(secret) {
-    command.issueCommand('add-mask', {}, secret);
+    command$1.issueCommand('add-mask', {}, secret);
 }
 exports.setSecret = setSecret;
 /**
@@ -206,7 +609,7 @@ exports.setSecret = setSecret;
  * @param inputPath
  */
 function addPath(inputPath) {
-    command.issueCommand('add-path', {}, inputPath);
+    command$1.issueCommand('add-path', {}, inputPath);
     process.env['PATH'] = `${inputPath}${path__default.delimiter}${process.env['PATH']}`;
 }
 exports.addPath = addPath;
@@ -232,7 +635,7 @@ exports.getInput = getInput;
  * @param     value    value to store
  */
 function setOutput(name, value) {
-    command.issueCommand('set-output', { name }, value);
+    command$1.issueCommand('set-output', { name }, value);
 }
 exports.setOutput = setOutput;
 //-----------------------------------------------------------------------
@@ -256,7 +659,7 @@ exports.setFailed = setFailed;
  * @param message debug message
  */
 function debug(message) {
-    command.issueCommand('debug', {}, message);
+    command$1.issueCommand('debug', {}, message);
 }
 exports.debug = debug;
 /**
@@ -264,7 +667,7 @@ exports.debug = debug;
  * @param message error issue message
  */
 function error(message) {
-    command.issue('error', message);
+    command$1.issue('error', message);
 }
 exports.error = error;
 /**
@@ -272,7 +675,7 @@ exports.error = error;
  * @param message warning issue message
  */
 function warning(message) {
-    command.issue('warning', message);
+    command$1.issue('warning', message);
 }
 exports.warning = warning;
 /**
@@ -291,14 +694,14 @@ exports.info = info;
  * @param name The name of the output group
  */
 function startGroup(name) {
-    command.issue('group', name);
+    command$1.issue('group', name);
 }
 exports.startGroup = startGroup;
 /**
  * End an output group.
  */
 function endGroup() {
-    command.issue('endgroup');
+    command$1.issue('endgroup');
 }
 exports.endGroup = endGroup;
 /**
@@ -333,7 +736,7 @@ exports.group = group;
  * @param     value    value to store
  */
 function saveState(name, value) {
-    command.issueCommand('save-state', { name }, value);
+    command$1.issueCommand('save-state', { name }, value);
 }
 exports.saveState = saveState;
 /**
@@ -349,23 +752,23 @@ exports.getState = getState;
 
 });
 
-unwrapExports(core);
-var core_1 = core.ExitCode;
-var core_2 = core.exportVariable;
-var core_3 = core.setSecret;
-var core_4 = core.addPath;
-var core_5 = core.getInput;
-var core_6 = core.setOutput;
-var core_7 = core.setFailed;
-var core_8 = core.debug;
-var core_9 = core.error;
-var core_10 = core.warning;
-var core_11 = core.info;
-var core_12 = core.startGroup;
-var core_13 = core.endGroup;
-var core_14 = core.group;
-var core_15 = core.saveState;
-var core_16 = core.getState;
+unwrapExports(core$1);
+var core_1$1 = core$1.ExitCode;
+var core_2$1 = core$1.exportVariable;
+var core_3$1 = core$1.setSecret;
+var core_4$1 = core$1.addPath;
+var core_5$1 = core$1.getInput;
+var core_6$1 = core$1.setOutput;
+var core_7$1 = core$1.setFailed;
+var core_8$1 = core$1.debug;
+var core_9$1 = core$1.error;
+var core_10$1 = core$1.warning;
+var core_11$1 = core$1.info;
+var core_12$1 = core$1.startGroup;
+var core_13$1 = core$1.endGroup;
+var core_14$1 = core$1.group;
+var core_15$1 = core$1.saveState;
+var core_16$1 = core$1.getState;
 
 var ioUtil = createCommonjsModule(function (module, exports) {
 var __awaiter = (commonjsGlobal && commonjsGlobal.__awaiter) || function (thisArg, _arguments, P, generator) {
@@ -3988,15 +4391,15 @@ function downloadTool(url) {
                 });
                 const destPath = path__default.join(tempDirectory, v4_1());
                 yield io.mkdirP(tempDirectory);
-                core.debug(`Downloading ${url}`);
-                core.debug(`Downloading ${destPath}`);
+                core$1.debug(`Downloading ${url}`);
+                core$1.debug(`Downloading ${destPath}`);
                 if (fs__default.existsSync(destPath)) {
                     throw new Error(`Destination file path ${destPath} already exists`);
                 }
                 const response = yield http.get(url);
                 if (response.message.statusCode !== 200) {
                     const err = new HTTPError(response.message.statusCode);
-                    core.debug(`Failed to download from "${url}". Code(${response.message.statusCode}) Message(${response.message.statusMessage})`);
+                    core$1.debug(`Failed to download from "${url}". Code(${response.message.statusCode}) Message(${response.message.statusMessage})`);
                     throw err;
                 }
                 const file = fs__default.createWriteStream(destPath);
@@ -4004,12 +4407,12 @@ function downloadTool(url) {
                     try {
                         const stream = response.message.pipe(file);
                         stream.on('close', () => {
-                            core.debug('download complete');
+                            core$1.debug('download complete');
                             resolve(destPath);
                         });
                     }
                     catch (err) {
-                        core.debug(`Failed to download from "${url}". Code(${response.message.statusCode}) Message(${response.message.statusMessage})`);
+                        core$1.debug(`Failed to download from "${url}". Code(${response.message.statusCode}) Message(${response.message.statusMessage})`);
                         reject(err);
                     }
                 }));
@@ -4180,8 +4583,8 @@ function cacheDir(sourceDir, tool, version, arch) {
     return __awaiter(this, void 0, void 0, function* () {
         version = semver.clean(version) || version;
         arch = arch || os.arch();
-        core.debug(`Caching tool ${tool} ${version} ${arch}`);
-        core.debug(`source dir: ${sourceDir}`);
+        core$1.debug(`Caching tool ${tool} ${version} ${arch}`);
+        core$1.debug(`source dir: ${sourceDir}`);
         if (!fs__default.statSync(sourceDir).isDirectory()) {
             throw new Error('sourceDir is not a directory');
         }
@@ -4213,8 +4616,8 @@ function cacheFile(sourceFile, targetFile, tool, version, arch) {
     return __awaiter(this, void 0, void 0, function* () {
         version = semver.clean(version) || version;
         arch = arch || os.arch();
-        core.debug(`Caching tool ${tool} ${version} ${arch}`);
-        core.debug(`source file: ${sourceFile}`);
+        core$1.debug(`Caching tool ${tool} ${version} ${arch}`);
+        core$1.debug(`source file: ${sourceFile}`);
         if (!fs__default.statSync(sourceFile).isFile()) {
             throw new Error('sourceFile is not a file');
         }
@@ -4223,7 +4626,7 @@ function cacheFile(sourceFile, targetFile, tool, version, arch) {
         // copy instead of move. move can fail on Windows due to
         // anti-virus software having an open handle on a file.
         const destPath = path__default.join(destFolder, targetFile);
-        core.debug(`destination file ${destPath}`);
+        core$1.debug(`destination file ${destPath}`);
         yield io.cp(sourceFile, destPath);
         // write .complete
         _completeToolPath(tool, version, arch);
@@ -4257,13 +4660,13 @@ function find(toolName, versionSpec, arch) {
     if (versionSpec) {
         versionSpec = semver.clean(versionSpec) || '';
         const cachePath = path__default.join(cacheRoot, toolName, versionSpec, arch);
-        core.debug(`checking cache: ${cachePath}`);
+        core$1.debug(`checking cache: ${cachePath}`);
         if (fs__default.existsSync(cachePath) && fs__default.existsSync(`${cachePath}.complete`)) {
-            core.debug(`Found tool in cache ${toolName} ${versionSpec} ${arch}`);
+            core$1.debug(`Found tool in cache ${toolName} ${versionSpec} ${arch}`);
             toolPath = cachePath;
         }
         else {
-            core.debug('not found');
+            core$1.debug('not found');
         }
     }
     return toolPath;
@@ -4306,7 +4709,7 @@ function _createExtractFolder(dest) {
 function _createToolPath(tool, version, arch) {
     return __awaiter(this, void 0, void 0, function* () {
         const folderPath = path__default.join(cacheRoot, tool, semver.clean(version) || version, arch || '');
-        core.debug(`destination ${folderPath}`);
+        core$1.debug(`destination ${folderPath}`);
         const markerPath = `${folderPath}.complete`;
         yield io.rmRF(folderPath);
         yield io.rmRF(markerPath);
@@ -4318,18 +4721,18 @@ function _completeToolPath(tool, version, arch) {
     const folderPath = path__default.join(cacheRoot, tool, semver.clean(version) || version, arch || '');
     const markerPath = `${folderPath}.complete`;
     fs__default.writeFileSync(markerPath, '');
-    core.debug('finished caching tool');
+    core$1.debug('finished caching tool');
 }
 function _isExplicitVersion(versionSpec) {
     const c = semver.clean(versionSpec) || '';
-    core.debug(`isExplicit: ${c}`);
+    core$1.debug(`isExplicit: ${c}`);
     const valid = semver.valid(c) != null;
-    core.debug(`explicit? ${valid}`);
+    core$1.debug(`explicit? ${valid}`);
     return valid;
 }
 function _evaluateVersions(versions, versionSpec) {
     let version = '';
-    core.debug(`evaluating ${versions.length} versions`);
+    core$1.debug(`evaluating ${versions.length} versions`);
     versions = versions.sort((a, b) => {
         if (semver.gt(a, b)) {
             return 1;
@@ -4345,10 +4748,10 @@ function _evaluateVersions(versions, versionSpec) {
         }
     }
     if (version) {
-        core.debug(`matched: ${version}`);
+        core$1.debug(`matched: ${version}`);
     }
     else {
-        core.debug('match not found');
+        core$1.debug('match not found');
     }
     return version;
 }
@@ -4395,7 +4798,7 @@ var NuGetInstaller = /** @class */ (function () {
         });
     };
     NuGetInstaller.prototype.getCachedToolPath = function () {
-        core_8('Checking tool cache');
+        core_10('Checking tool cache');
         return toolCache_8(this.cachedToolName, this.version);
     };
     NuGetInstaller.prototype.downloadAndInstall = function () {
@@ -4405,14 +4808,14 @@ var NuGetInstaller = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         downloadUrl = this.downloadUrlTmpl.replace('{version}', this.version === 'latest' ? 'latest' : "v" + this.version);
-                        core_8("Downloading NuGet from " + downloadUrl);
+                        core_10("Downloading NuGet from " + downloadUrl);
                         return [4 /*yield*/, toolCache_2(downloadUrl)];
                     case 1:
                         nugetPath = _a.sent();
                         nugetPathDir = path.dirname(nugetPath);
                         // Rename to work around https://github.com/actions/toolkit/issues/60
                         fs.renameSync(nugetPath, path.join(nugetPathDir, 'nuget.exe'));
-                        core_8('Caching tool');
+                        core_10('Caching tool');
                         return [4 /*yield*/, toolCache_6(nugetPathDir, this.cachedToolName, this.version)];
                     case 2:
                         cachedDir = _a.sent();
@@ -4439,7 +4842,7 @@ function run() {
                     return [3 /*break*/, 3];
                 case 2:
                     error_1 = _a.sent();
-                    core_7(error_1.message);
+                    core_8(error_1.message);
                     return [3 /*break*/, 3];
                 case 3: return [2 /*return*/];
             }
